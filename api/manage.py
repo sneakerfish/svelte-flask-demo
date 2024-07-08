@@ -1,20 +1,23 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 from flask_restful import reqparse, abort, Api, Resource
+from sqlalchemy import delete, update
+from app import create_app, db
+from models import TodoModel
 
-app = Flask(__name__)
+print("SQLALCHEMY_DATABASE_URI: ", os.getenv('SQLALCHEMY_DATABASE_URI'))
+
+app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 CORS(app)
 api = Api(app)
 
-TODOS = [
-     {'id': 1, 'title': 'build an API', 'done': False},
-     {'id': 2, 'title': '?????', 'done': False},
-     {'id': 3, 'title': 'profit!', 'done': False}
-]
+
 
 
 def abort_if_todo_doesnt_exist(todo_id):
-    if todo_id not in TODOS:
+    todo = TodoModel.query.get(todo_id)
+    if not todo:
         abort(404, message="Todo {} doesn't exist".format(todo_id))
 
 parser = reqparse.RequestParser()
@@ -26,17 +29,17 @@ parser.add_argument('task')
 class Todo(Resource):
     def get(self, todo_id):
         abort_if_todo_doesnt_exist(todo_id)
-        return TODOS[todo_id]
+        return TodoModel.query.get(todo_id)
 
     def delete(self, todo_id):
         abort_if_todo_doesnt_exist(todo_id)
-        del TODOS[todo_id]
+        delete(TodoModel).where(TodoModel.id == todo_id)
         return '', 204
 
     def put(self, todo_id):
         args = parser.parse_args()
-        task = {'task': args['task']}
-        TODOS[todo_id] = task
+        task = {'title': args['title']}
+        update(TodoModel).where(TodoModel.id == todo_id).values(task)
         return task, 201
 
 
@@ -44,14 +47,14 @@ class Todo(Resource):
 # shows a list of all todos, and lets you POST to add new tasks
 class TodoList(Resource):
     def get(self):
-        return TODOS
+        return [i.json_dump() for i in TodoModel.query.all()]
 
     def post(self):
         args = parser.parse_args()
-        todo_id = int(max(TODOS.keys()).lstrip('todo')) + 1
-        todo_id = 'todo%i' % todo_id
-        TODOS[todo_id] = {'task': args['task']}
-        return TODOS[todo_id], 201
+        todo = TodoModel(title=args['title'])
+        db.session.add(todo)
+        db.session.commit()
+        return todo.json_dump(), 201
 
 ##
 ## Actually setup the Api resource routing here

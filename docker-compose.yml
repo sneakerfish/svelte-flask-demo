@@ -8,6 +8,8 @@ services:
       - 5000:5000
     volumes:
       - ./api/:/usr/src/app/
+    environment:
+      - SQLALCHEMY_DATABASE_URI=mysql://root:password@db:3306/todolist_dev?charset=utf8mb4
   web:
     build:
       context: ./web
