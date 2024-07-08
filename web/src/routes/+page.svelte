@@ -8,12 +8,15 @@
 		try {
 			const response = await fetch('http://localhost:5000/todos');
 			todos = await response.json();
-			console.log(todos);
 		} catch (err) {
 			error = "Error fetching todos: " + err.message;
 		}
 	});
 </script>
+
+<h1 class="text-3xl font-bold">
+	Todo list
+</h1>
 
 {#if error}
 	<p>{error}</p>
@@ -21,7 +24,6 @@
 	<table>
 		<thead>
 		<tr>
-			<th>ID</th>
 			<th>Title</th>
 			<th>Completed</th>
 		</tr>
@@ -29,7 +31,6 @@
 		<tbody>
 		{#each todos as todo}
 			<tr>
-				<td>{todo.id}</td>
 				<td>{todo.title}</td>
 				<td>{todo.completed ? 'Yes' : 'No'}</td>
 			</tr>
