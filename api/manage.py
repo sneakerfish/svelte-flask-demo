@@ -1,25 +1,16 @@
-# import os, click, sys
-# import csv
-# from flask import Flask
-#
-# app = Flask(__name__)
-#
-# @app.route("/")
-# def hello_world():
-#     return "<p>Hello, World!</p>"
-
-
 from flask import Flask
+from flask_cors import CORS
 from flask_restful import reqparse, abort, Api, Resource
 
 app = Flask(__name__)
+CORS(app)
 api = Api(app)
 
-TODOS = {
-    'todo1': {'task': 'build an API'},
-    'todo2': {'task': '?????'},
-    'todo3': {'task': 'profit!'},
-}
+TODOS = [
+     {'id': 1, 'title': 'build an API', 'done': False},
+     {'id': 2, 'title': '?????', 'done': False},
+     {'id': 3, 'title': 'profit!', 'done': False}
+]
 
 
 def abort_if_todo_doesnt_exist(todo_id):

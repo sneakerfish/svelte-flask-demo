@@ -6,6 +6,8 @@ services:
       - web
     ports:
       - 5000:5000
+    volumes:
+      - ./api/:/usr/src/app/
   web:
     build:
       context: ./web
