@@ -10,6 +10,8 @@ services:
       - ./api/:/usr/src/app/
     environment:
       - SQLALCHEMY_DATABASE_URI=mysql://root:password@db:3306/todolist_dev?charset=utf8mb4
+      - FLASK_DEBUG=1
+    restart: on-failure
   web:
     build:
       context: ./web

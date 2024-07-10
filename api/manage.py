@@ -1,4 +1,4 @@
-import os
+import os, datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from marshmallow import Schema, fields, validate, post_load
@@ -6,8 +6,6 @@ from flask_marshmallow import Marshmallow
 from sqlalchemy import delete, update
 from app import create_app, db
 from models import TodoModel
-
-print("SQLALCHEMY_DATABASE_URI: ", os.getenv('SQLALCHEMY_DATABASE_URI'))
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
 CORS(app)
@@ -35,9 +33,7 @@ def get_todos():
 
 @app.route('/todos', methods=['POST'])
 def create_todo():
-    todo, errors = todo_schema.load(request.get_json())
-    if errors:
-        return jsonify(errors), 400  # Bad Request
+    todo = todo_schema.load(request.get_json())
     db_todo = TodoModel(**todo)
     db.session.add(db_todo)
     db.session.commit()
@@ -56,14 +52,21 @@ def update_todo(todo_id):
     if db_todo is None:
         return jsonify({'error': 'Todo not found'}), 404  # Not Found
 
-    todo, errors = todo_schema.load(request.get_json())
-    if errors:
-        return jsonify(errors), 400  # Bad Request
+    todo = todo_schema.load(request.get_json())
 
-    db_todo.title = todo['title']
-    db_todo.completed = todo['completed']
-    db.session.add(db_todo)
-    db.session.commit()
+    updated = False
+    if 'title' in todo:
+        db_todo.title = todo['title']
+        updated = True
+    if 'completed' in todo:
+        if todo['completed'] is None:
+            db_todo.completed = None
+        else:
+            db_todo.completed = datetime.datetime.strptime(todo['completed'], '%Y-%m-%d %H:%M:%S')
+        updated = True
+    if updated:
+        db.session.add(db_todo)
+        db.session.commit()
     return todo_schema.dump(todo), 200  # OK
 
 @app.route('/todos/<int:todo_id>', methods=['DELETE'])
