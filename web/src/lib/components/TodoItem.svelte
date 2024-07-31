@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	// Only import what you need!
 	import { Icon, Plus, Minus, Check, XMark } from "svelte-hero-icons";
+	import config from '$lib/config';
 
 	export let todo = {};
 
@@ -26,7 +27,7 @@
 		if (editedTitle.trim() !== '') {
 			todo.title = editedTitle;
 			try {
-				const response = await fetch(`http://localhost:5000/todos/${todo.id}`, {
+				const response = await fetch(config.apiUrl + `/todos/${todo.id}`, {
 					method: 'PUT',
 					headers: {
 						'Content-Type': 'application/json'
@@ -48,7 +49,7 @@
 
 	async function handleDelete() {
 		try {
-			const response = await fetch(`http://localhost:5000/todos/${todo.id}`, { method: 'DELETE' });
+			const response = await fetch(config.apiUrl + `/todos/${todo.id}`, { method: 'DELETE' });
 			if (!response.ok) {
 				throw new Error(`Error deleting todo: ${response.status}`);
 			}
