@@ -2,6 +2,8 @@
 	import { createEventDispatcher } from 'svelte';
 	// Only import what you need!
 	import { Icon, Plus, Minus, Check, XMark } from "svelte-hero-icons";
+	import IconButton from '$lib/components/IconButton.svelte';
+
 	import config from '$lib/config';
 
 	export let todo = {};
@@ -65,26 +67,17 @@
 <li>
 
 	{#if isEditing}
-		<input class="min-w-60 m-1.5"
+		<input
+					class="peer w-full h-full bg-transparent text-blue-gray-700 font-sans font-normal outline outline-0 focus:outline-0 disabled:bg-blue-gray-50 disabled:border-0 transition-all placeholder-shown:border placeholder-shown:border-blue-gray-200 placeholder-shown:border-t-blue-gray-200 border focus:border-2 border-t-transparent text-sm px-3 py-2.5 rounded-[7px] border-blue-gray-200 focus:border-gray-900"
 			bind:value={editedTitle} on:keydown.enter={handleEditSave} />
-		<button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-1 rounded-full"
-						aria-label="Save changes"
-						on:click={handleEditSave}>
-			<Icon src="{Check}" size="32"/>
-			</button>
-		<button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-1 rounded-full"
-						aria-label="Cancel changes"
-						on:click={handleEditCancel}>
-			<Icon src="{XMark}" size="32" /></button>
+		<IconButton label="Save changes" onClick={handleEditSave} icon="Check" color="green" />
+		<IconButton label="Cancel changes" onClick={handleEditCancel} icon="XMark" color="red"/>
 	{:else}
 		<input type="checkbox" class="checked:bg-gray-900 checked:border-transparent"
 					 bind:checked={todo.completed} on:change={toggleComplete} />
 		<span class="min-w-60 m-1.5"
 			class:completed={todo.completed} on:dblclick={handleEditStart}>{todo.title}</span>
-		<button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-1 rounded-full"
-						aria-label="Delete todo item" on:click={handleDelete}>
-			<Icon src="{Minus}" size="32" />
-			</button>
+		<IconButton label="Delete todo item" onClick={handleDelete} icon="Minus" color="red" />
 	{/if}
 </li>
 

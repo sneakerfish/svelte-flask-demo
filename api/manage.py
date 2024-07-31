@@ -31,7 +31,7 @@ def get_todos():
     todos = TodoModel.query.all()
     return todos_schema.dump(todos), 200
 
-@app.route('/todos', methods=['POST'])
+@app.route('/todos', methods=['PUT'])
 def create_todo():
     todo = todo_schema.load(request.get_json())
     db_todo = TodoModel(**todo)
