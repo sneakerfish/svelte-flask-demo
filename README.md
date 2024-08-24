@@ -31,7 +31,7 @@ the directory where you cloned the repository, simply enter
 
 ```sh
 docker compose up
-``
+```
 
 and it should download and build everything.  You can see the empty
 todo list by visiting the url `http://localhost:8080`. 
