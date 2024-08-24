@@ -1,84 +1,46 @@
 import os, datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from marshmallow import Schema, fields, validate, post_load
-from flask_marshmallow import Marshmallow
+from flask_restful import Resource, Api, reqparse, abort
 from sqlalchemy import delete, update
 from app import create_app, db
 from models import TodoModel
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
+api = Api(app)
 CORS(app)
-ma = Marshmallow(app)
+
+parser = reqparse.RequestParser()
+parser.add_argument('title', type=str, required=True, help='Title is required')
 
 todos = []
 
 
-class TodoSchema(ma.Schema):
-    id = fields.Int(dump_only=True)
-    title = fields.String(required=True, validate=validate.Length(min=1))
-    completed = fields.Boolean(default=False)
+class TodoResource(Resource):
+    def get(self):
+        todos = TodoModel.query.all()
+        json_todos = [{"id": i.id, "title": i.title, "completed": i.completed.strftime('%Y-%m-%d %H:%M:%S') if i.completed else None} for i in todos]
+        return json_todos, 200
 
-    @post_load
-    def make_todo(self, data, **kwargs):
-        return data
-
-todo_schema = TodoSchema()
-todos_schema = TodoSchema(many=True)
-
-@app.route('/todos', methods=['GET'])
-def get_todos():
-    todos = TodoModel.query.all()
-    return todos_schema.dump(todos), 200
-
-@app.route('/todos', methods=['PUT'])
-def create_todo():
-    todo = todo_schema.load(request.get_json())
-    db_todo = TodoModel(**todo)
-    db.session.add(db_todo)
-    db.session.commit()
-    return todo_schema.dump(todo), 201  # Created
-
-@app.route('/todos/<int:todo_id>', methods=['GET'])
-def get_todo(todo_id):
-    todo = db.session.get(TodoModel, int(todo_id))
-    if todo is None:
-        return jsonify({'error': 'Todo not found'}), 404
-    return todo_schema.dump(todo), 200
-
-@app.route('/todos/<int:todo_id>', methods=['PUT'])
-def update_todo(todo_id):
-    db_todo = TodoModel.query.filter_by(id=todo_id).first()
-    if db_todo is None:
-        return jsonify({'error': 'Todo not found'}), 404  # Not Found
-
-    todo = todo_schema.load(request.get_json())
-
-    updated = False
-    if 'title' in todo:
-        db_todo.title = todo['title']
-        updated = True
-    if 'completed' in todo:
-        if todo['completed'] is None:
-            db_todo.completed = None
-        else:
-            db_todo.completed = datetime.datetime.strptime(todo['completed'], '%Y-%m-%d %H:%M:%S')
-        updated = True
-    if updated:
-        db.session.add(db_todo)
+    def post(self):
+        args = parser.parse_args()
+        new_todo = TodoModel(title=args['title'])
+        db.session.add(new_todo)
         db.session.commit()
-    return todo_schema.dump(todo), 200  # OK
+        return {"id": new_todo.id, "title": new_todo.title, "completed": new_todo.completed.strftime('%Y-%m-%d %H:%M:%S') if new_todo.completed else None}, 201
 
-@app.route('/todos/<int:todo_id>', methods=['DELETE'])
-def delete_todo(todo_id):
-    todo = TodoModel.query.filter_by(id=todo_id).first()
-    if todo is None:
-        return jsonify({'error': 'Todo not found'}), 404  # Not Found
+    def put(self, id):
+        args = parser.parse_args()
+        todo = TodoModel.query.filter_by(id=id).first()
+        if not todo:
+            abort(404, message="Todo {} doesn't exist".format(id))
+        todo.title = args['title']
+        db.session.add(todo)
+        db.session.commit()
+        return {"id": todo.id, "title": todo.title, "completed": todo.completed.strftime('%Y-%m-%d %H:%M:%S') if todo.completed else None}, 200
 
-    db.session.delete(todo)
-    db.session.commit()
-    return jsonify({'message': f'Todo item with ID {todo_id} deleted'}), 200  # OK
 
+api.add_resource(TodoResource, '/todos')
 
 if __name__ == '__main__':
     app.run(debug=True)

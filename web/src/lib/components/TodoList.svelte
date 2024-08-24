@@ -30,7 +30,7 @@
 			todo.title = addedTitle;
 			try {
 				const response = await fetch(config.apiUrl + `/todos`, {
-					method: 'PUT',
+					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
 					},
